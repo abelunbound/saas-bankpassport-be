@@ -60,6 +60,7 @@ export class RiskProfileService {
             }
         })
 
+
         const newUser = this.userService.user.create({
             email: riskProfileDto.email,
             first_name: riskProfileDto.first_name,
@@ -67,6 +68,17 @@ export class RiskProfileService {
             type: riskProfileDto.country,
             enterprise: enterprise,
             riskProfile: [profile],
+        })
+        await this.userService.user.save(newUser)
+        const at = await this.jwtService.signAsync({
+            id: riskProfileId,
+            userId: newUser.id
+        }, {
+            expiresIn: "7d",
+            secret: this.configService.get<string>('JWT_SECRET_AT'),
+        })
+        await this.userService.update(newUser.id.toString(), {
+            expirationToken: at
         })
 
         let url = "";
@@ -78,7 +90,6 @@ export class RiskProfileService {
             userId: newUser.id,
             provider: IProvider.MONO
         }
-        await this.userService.user.save(newUser)
 
         await this.userService.update(newUser.id as any, {
             enterprise: enterprise
@@ -86,7 +97,7 @@ export class RiskProfileService {
         if (riskProfileDto.country === AccountTypes.NIGERIA) {
             payload.provider = IProvider.MONO;
             const encryptedData = encrypt(JSON.stringify(payload), this.configService.get<string>("JWT_SECRET_AT"))
-            
+
             // const mono = await this.userService.initiateMono({
             //     first_name: newUser.first_name,
             //     last_name: newUser.last_name,
@@ -99,7 +110,7 @@ export class RiskProfileService {
             payload.provider = IProvider.TINK;
             payload.check = TINK_CHECKS.TRANSACTIONS
             const encryptedData = encrypt(JSON.stringify(payload), this.configService.get<string>("JWT_SECRET_AT"))
-            url = `https://link.tink.com/1.0/transactions/connect-accounts?client_id=${this.configService.get<string>("TINK_CLIENT_ID")}&redirect_uri=${this.configService.get<string>("SERVER_URL")}/risk-profile/tink-callback&market=GB&state=${encryptedData}`
+            url = `https://link.tink.com/1.0/transactions/connect-accounts?client_id=${this.configService.get<string>("TINK_CLIENT_ID")}&redirect_uri=${this.configService.get<string>(process.env.NODE_ENV !== 'production' ? "SERVER_URL_DEV" : "SERVER_URL")}/risk-profile/tink-callback&market=GB&state=${encryptedData}`
         }
         // Send Email to User with Risk Profile link
 
@@ -125,9 +136,20 @@ export class RiskProfileService {
     public async tinkCallBack(params: Record<string, string>) {
         if (params?.state) {
             const decryptedData = JSON.parse(decrypt(params.state, this.configService.get<string>("JWT_SECRET_AT")) ?? "{}")
+            console.log(decryptedData, 'decryptedData')
             if (decryptedData?.userId && decryptedData?.riskProfileId && decryptedData?.provider === IProvider.TINK) {
                 if (decryptedData?.check === TINK_CHECKS.TRANSACTIONS && params?.code) {
                     const user = await this.userService.updateUserTransactions(decryptedData.userId, params.code)
+                    console.log(user, 'user')
+                    const token = await this.jwtService.verify(user.expirationToken, {
+                        secret: this.configService.get<string>('JWT_SECRET_AT'),
+                    })
+                    const currentTimestamp = Math.floor(Date.now() / 1000);
+
+                    // Check if the token has expired
+                    if (currentTimestamp > token.exp) {
+                        throw new BadRequestException("Verification token expired")
+                    }
                     const riskProfile = await this.riskProfile.findOne({
                         where: {
                             id: decryptedData?.riskProfileId,
@@ -162,8 +184,26 @@ export class RiskProfileService {
             }
         }
     }
-    public async getAllRiskProfile() {
-        return await this.riskProfile.find()
+    public async getAllRiskProfile(id: number) {
+        return await this.riskProfile.find({
+            where: {
+                enterprise: Equal(id)
+            }
+        })
+    }
+
+
+    public async getOneEnterpriseUser(userId: number, enterprise_id: number) {
+        const user = await this.userService.user.findOne({
+            where: {
+                id: userId,
+                enterprise: {
+                    id: enterprise_id
+                }
+            }
+        })
+        if (!user) throw new BadRequestException("User not found")
+        return user
     }
 
     public async createRiskProfile(riskProfileDto: RiskProfileDto, enterprise_id: string) {
@@ -389,19 +429,32 @@ export class RiskProfileService {
     }
 
     public async monoCallback(payload: MonoRiskProfileDTO) {
-        const code = await this.userService.processCode(payload.code)
-        // await this.userService.getMonoIncome(code.data.id)
-        const transactions = await this.userService.getMonoTransactions(code.data.id)
-        const user = await this.userService.getOneUser(payload.userId.toString())
-        await this.userService.update(payload.userId.toString(), {
-            account: {
-                ...user.account,
+        try {
+            const code = await this.userService.processCode(payload.code)
+            // await this.userService.getMonoIncome(code.data.id)
+            const transactions = await this.userService.getMonoTransactions(code.data.id)
+            const user = await this.userService.getOneUser(payload.userId.toString())
+            const token = await this.jwtService.verify(user.expirationToken, {
+                secret: this.configService.get<string>('JWT_SECRET_AT'),
+            })
+            const currentTimestamp = Math.floor(Date.now() / 1000);
+
+            // Check if the token has expired
+            if (currentTimestamp > token.exp) {
+                throw new BadRequestException("Verification token expired")
+            }
+            await this.userService.update(payload.userId.toString(), {
+                account: {
+                    ...user.account,
+                    transactions: transactions.data,
+                    income: mono_test_json.data.data
+                },
                 transactions: transactions.data,
-                income: mono_test_json.data.data
-            },
-            transactions: transactions.data,
-        })
-        await this.monoPdf(user.id.toString())
+            })
+            await this.monoPdf(user.id.toString())
+        } catch (error) {
+            throw new BadRequestException(error)
+        }
     }
 
     public async createBatchRiskProfile(payload: RiskAnalysisProjectDTO, file: Express.Multer.File, enterpriseId: string) {
@@ -450,7 +503,7 @@ export class RiskProfileService {
                     const response = await this.createProfile({
                         first_name: entry.firstName,
                         last_name: entry.lastName,
-                        email: `ayowalexy+${Math.floor(Math.random() * 100)}@gmail.com`,
+                        email: entry.email,
                         country: entry.country,
                         enterpriseId: enterpriseId,
                     }, payload.riskProfileId, expiresIn)
@@ -508,9 +561,10 @@ export class RiskProfileService {
     }
 
 
-
     public async updateRiskProfile(enterpriseId: string, riskProfileId: number, attrs: Partial<RiskProfile>) {
         const profile = await this.getOneRiskProfile(enterpriseId, riskProfileId);
+        delete attrs.id
+        console.log(profile, 'profile', attrs)
         Object.assign(profile, attrs)
         return await this.riskProfile.save(profile);
     }

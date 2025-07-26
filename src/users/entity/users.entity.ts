@@ -2,6 +2,12 @@ import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateCol
 import { Enterprise } from 'src/enterprise/entity/enterprise.entity';
 import { RiskProfile } from 'src/risk-profile/entity/risk-profile.entity';
 
+export enum STATUS_ENUM {
+    COMPLETED = "COMPLETED",
+    PENDING = "PENDING",
+    EXPIRED = "EXPIRED"
+}
+
 @Entity()
 export class Users {
     @PrimaryGeneratedColumn("increment")
@@ -80,6 +86,12 @@ export class Users {
         nullable: true
     })
     expirationToken?: string
+
+    @Column({
+        nullable: true,
+        default: STATUS_ENUM.PENDING
+    })
+    status: string
 }
 
 

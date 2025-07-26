@@ -8,7 +8,6 @@ import { EnterpriseModule } from 'src/enterprise/enterprise.module';
 
 @Module({
   imports: [
-    forwardRef(() => EnterpriseModule),
     TypeOrmModule.forFeature([Users])
   ],
   providers: [UsersService, JwtService],

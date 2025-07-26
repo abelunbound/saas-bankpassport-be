@@ -1,13 +1,17 @@
 import { BadRequestException, Inject, Injectable, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Enterprise } from './entity/enterprise.entity';
-import { Repository } from 'typeorm';
+import { Equal, Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { RiskProfile } from 'src/risk-profile/entity/risk-profile.entity';
-import { AuthDto, EnterpriseDto } from './dto/enterprise.dto';
+import { RiskProfile, RiskProfileProject } from 'src/risk-profile/entity/risk-profile.entity';
+import { AuthDto, EnterpriseDto, EnterpriseUserEntity, UpdateEnterpriseDto } from './dto/enterprise.dto';
 import * as bcrypt from 'bcryptjs';
 import { JwtPayload } from 'src/utils/types/jwt.types';
+import { UsersService } from 'src/users/users.service';
+import { plainToClass, plainToInstance } from 'class-transformer';
+import { CollaboratorService } from 'src/collaborator/collaborator.service';
+import { STATUS_ENUM } from 'src/users/entity/users.entity';
 
 @Injectable()
 export class EnterpriseService {
@@ -16,6 +20,10 @@ export class EnterpriseService {
         private configService: ConfigService,
         private readonly jwtService: JwtService,
         @InjectRepository(RiskProfile) public risk_profile: Repository<RiskProfile>,
+        private readonly userService: UsersService,
+        private readonly collaboratorService: CollaboratorService,
+        @InjectRepository(RiskProfileProject) private riskProfileProject: Repository<RiskProfileProject>,
+
     ) { }
 
     public async create(enterpriseDto: EnterpriseDto) {
@@ -29,7 +37,8 @@ export class EnterpriseService {
         })
         await this.repo.save(user)
         delete user.password
-        return user
+        const tokens = await this.getToken(user.id as any, user.email);
+        return tokens;
     }
 
     public async getAllEnterprise() {
@@ -80,7 +89,48 @@ export class EnterpriseService {
         if (!user) throw new BadRequestException("User not found")
         let auth_user = { ...user }
         delete auth_user.password
-        return user
+        return auth_user
+    }
+
+    public async getAllEnterpriseUser(enterpriseId: number) {
+        return await this.userService.user.find({
+            where: {
+                enterprise: {
+                    id: Equal(enterpriseId)
+                }
+            }
+        })
+    }
+
+    public async completeEnterpriseProfile(enterprise_id: string, payload: UpdateEnterpriseDto) {
+        await this.update(enterprise_id, payload)
+        return "Profile completed successfully"
+    }
+
+
+    public async getAllStats(enterprise_id: number) {
+        const users = await this.getAllEnterpriseUser(enterprise_id)
+
+        const risk_profiles = await this.risk_profile.find({
+            where: {
+                enterprise: {
+                    id: enterprise_id
+                }
+            }
+        })
+        const completed = users.filter((user) => user.status === STATUS_ENUM.COMPLETED)
+        const pending = users.filter((user) => user.status === STATUS_ENUM.PENDING)
+        const expired = users.filter((user) => user.status === STATUS_ENUM.EXPIRED)
+
+        return {
+            users: users.length, risk_profiles: risk_profiles.length, completed: completed.length, pending: pending.length, expired: expired.length
+        }
+
+    }
+
+
+    public async getAllCollaborators(enterprise_id: number) {
+        return await this.collaboratorService.getAllCollaborators(enterprise_id)
     }
 
     public async update(id: string, attrs: Partial<Enterprise>) {

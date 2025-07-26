@@ -36,6 +36,6 @@ export function getOrmConfig(): TypeOrmModuleOptions {
       synchronize: true,
     };
   }
-
+  console.log(ormConfig, 'DG Config')
   return ormConfig;
 }

@@ -1,6 +1,6 @@
 import { EnterpriseService } from './enterprise.service';
 import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch, Post, UseGuards } from '@nestjs/common';
-import { AuthDto, EnterpriseDto } from './dto/enterprise.dto';
+import { AuthDto, EnterpriseDto, EnterpriseUserEntity, UpdateEnterpriseDto } from './dto/enterprise.dto';
 import { Public } from 'src/decorators/public-decorator';
 import { GetCurrentUserId } from 'src/decorators/get-current-user-id.decorator';
 import { ApiBearerAuth } from '@nestjs/swagger';
@@ -43,6 +43,55 @@ export class EnterpriseController {
         @GetCurrentUserId() userId: string
     ) {
         return this.enterpriseService.getUser(userId)
+    }
+
+    @ApiBearerAuth()
+    @Post('complete-profile')
+    @HttpCode(HttpStatus.CREATED)
+    async completeProfile(
+        @GetCurrentUserId() userId: string,
+        @Body() payload: UpdateEnterpriseDto
+    ) {
+        return this.enterpriseService.completeEnterpriseProfile(userId, payload)
+    }
+
+    @ApiBearerAuth()
+    @Post('/:id')
+    @HttpCode(HttpStatus.CREATED)
+    async getUserById(
+        @Param("id") userId: string
+    ) {
+        return this.enterpriseService.getUser(userId)
+    }
+
+
+    @ApiBearerAuth()
+    @Get('/stats')
+    @HttpCode(HttpStatus.CREATED)
+    async stats(
+        @GetCurrentUserId() userId: number
+    ) {
+        return this.enterpriseService.getAllStats(userId)
+    }
+
+
+    @ApiBearerAuth()
+    @Get('/collaborators')
+    @HttpCode(HttpStatus.CREATED)
+    async getAllCollaborators(
+        @GetCurrentUserId() userId: number
+    ) {
+        return this.enterpriseService.getAllCollaborators(userId)
+    }
+
+
+    @ApiBearerAuth()
+    @Get('/users')
+    @HttpCode(HttpStatus.CREATED)
+    async getEnterpriseUsers(
+        @GetCurrentUserId() userId: number
+    ) {
+        return this.enterpriseService.getAllEnterpriseUser(userId)
     }
 
 }

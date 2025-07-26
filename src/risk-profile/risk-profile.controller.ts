@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, ParseFilePipeBuilder, Patch, Post, Query, Res, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, ParseFilePipeBuilder, Patch, Post, Put, Query, Res, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { RiskProfileService } from './risk-profile.service';
 import { FileUploadDto, MonoRiskProfileDTO, RiskAnalysisProjectDTO, RiskProfileDto } from './dto/risk-profile.dto';
 import { Response, Express } from 'express';
@@ -6,6 +6,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { GetCurrentUserId } from 'src/decorators/get-current-user-id.decorator';
 import { Public } from 'src/decorators/public-decorator';
 import { ApiBearerAuth, ApiBody, ApiConsumes } from '@nestjs/swagger';
+import { IUserDto } from 'src/users/dto/users.dto';
 
 @Controller('risk-profile')
 export class RiskProfileController {
@@ -16,8 +17,10 @@ export class RiskProfileController {
     @ApiBearerAuth()
     @Get("/")
     @HttpCode(HttpStatus.OK)
-    async getAllRiskProfiles() {
-        return await this.riskProfileService.getAllRiskProfile()
+    async getAllRiskProfiles(
+        @GetCurrentUserId() userId: number
+    ) {
+        return await this.riskProfileService.getAllRiskProfile(userId)
     }
 
     @ApiBearerAuth()
@@ -50,8 +53,41 @@ export class RiskProfileController {
     @Get("/all")
     @HttpCode(HttpStatus.OK)
     async getAllProfiles(
+        @GetCurrentUserId() userId: number
     ) {
-        return await this.riskProfileService.getAllRiskProfile()
+        return await this.riskProfileService.getAllRiskProfile(userId)
+    }
+
+    @Public()
+    @Get("/public")
+    @HttpCode(HttpStatus.OK)
+    async getPublicAllProfiles(
+        @Query("userId") userId: number
+    ) {
+        return await this.riskProfileService.getAllRiskProfile(userId)
+    }
+
+    @ApiBearerAuth()
+    @Get("user/:id")
+    @HttpCode(HttpStatus.OK)
+    async getOneUser(
+        @Param("id") id: number,
+        @GetCurrentUserId() userId: number
+    ) {
+        return await this.riskProfileService.getOneEnterpriseUser(id, userId)
+    }
+
+    @Public()
+    @Put("/public")
+    @HttpCode(HttpStatus.OK)
+    async createUser(
+        @Body() payload: IUserDto,
+        @Query() query: {
+            profileId: number,
+            expTime: string
+        }
+    ) {
+        return await this.riskProfileService.createProfile(payload, query.profileId, query.expTime)
     }
 
     @ApiBearerAuth()
@@ -65,7 +101,7 @@ export class RiskProfileController {
     }
 
     @ApiBearerAuth()
-    @Patch("/:id")
+    @Post("edit/:id")
     @HttpCode(HttpStatus.CREATED)
     async updateRiskProfile(
         @Param("id") id: number,

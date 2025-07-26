@@ -37,12 +37,12 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
       inject: [ConfigService],
       useFactory: async (configService: ConfigService) => ({
         transport: {
-          host: configService.get<string>("GMAIL_HOST"),
-          port: configService.get<number>("GMAIL_PORT"),
+          host: "smtp.gmail.com", //configService.get<string>("GMAIL_HOST"),
+          port: "465", //configService.get<number>("GMAIL_PORT"),
           secure: true,
           auth: {
-            user: configService.get<string>("GMAIL_SENDER"),
-            pass: configService.get<string>("GMAIL_APP_PASSWORD")
+            user: "info.bankpassport@gmail.com", //configService.get<string>("GMAIL_SENDER"),
+            pass: "glrn exix vkhe oeba" //configService.get<string>("GMAIL_APP_PASSWORD")
           },
         },
         template: {
@@ -69,7 +69,6 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
     },
     JwtService,
     AtStrategy,
-    RtStrategy,
     AppService,],
 })
 export class AppModule { }

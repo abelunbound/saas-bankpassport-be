@@ -1,5 +1,8 @@
+import { OmitType } from '@nestjs/mapped-types'
 import { ApiProperty } from '@nestjs/swagger'
-import { IsString, IsNotEmpty, IsEmail } from 'class-validator'
+import { Exclude } from 'class-transformer'
+import { IsString, IsNotEmpty, IsEmail, IsOptional } from 'class-validator'
+import { UsersDto } from 'src/users/dto/users.dto'
 
 export class EnterpriseDto {
     @ApiProperty()
@@ -23,6 +26,29 @@ export class EnterpriseDto {
     @IsNotEmpty()
     last_name: string
 
+
+}
+
+export class AuthDto {
+    @ApiProperty()
+    @IsString()
+    @IsNotEmpty()
+    @IsEmail()
+    email: string
+
+    @ApiProperty()
+    @IsString()
+    @IsNotEmpty()
+    password: string
+}
+
+
+export class EnterpriseUserEntity extends OmitType(UsersDto, ["enterpriseId"]) {
+    transactions: Array<any>
+    account: any
+}
+
+export class UpdateEnterpriseDto {
     @ApiProperty()
     @IsString()
     @IsNotEmpty()
@@ -35,13 +61,13 @@ export class EnterpriseDto {
 
     @ApiProperty()
     @IsString()
-    @IsNotEmpty()
+    @IsOptional()
     @IsEmail()
     group_email: string
 
     @ApiProperty()
     @IsString()
-    @IsNotEmpty()
+    @IsOptional()
     @IsEmail()
     personal_email: string
 
@@ -52,12 +78,12 @@ export class EnterpriseDto {
 
     @ApiProperty()
     @IsString()
-    @IsNotEmpty()
+    @IsOptional()
     address_line_2: string
 
     @ApiProperty()
     @IsString()
-    @IsNotEmpty()
+    @IsOptional()
     address_line_3: string
 
     @ApiProperty()
@@ -75,17 +101,3 @@ export class EnterpriseDto {
     @IsNotEmpty()
     country: string
 }
-
-export class AuthDto {
-    @ApiProperty()
-    @IsString()
-    @IsNotEmpty()
-    @IsEmail()
-    email: string
-
-    @ApiProperty()
-    @IsString()
-    @IsNotEmpty()
-    password: string
-}
-

@@ -29,7 +29,9 @@ export class Enterprise {
     @Column()
     password: string;
 
-    @Column()
+    @Column({
+        nullable: true
+    })
     phone_number: string;
 
     @OneToMany(() => Users, (user) => user.enterprise, { onUpdate: "CASCADE", onDelete: 'CASCADE' })
@@ -42,30 +44,48 @@ export class Enterprise {
     @OneToMany(() => RiskProfile, (enterprise) => enterprise.enterprise)
     risk_profile: RiskProfile[]
 
-    @Column()
+    @Column({
+        nullable: true
+    })
     enterprise_name: string
 
-    @Column()
+    @Column({
+        nullable: true
+    })
     group_email: string
 
-    @Column()
+    @Column({
+        nullable: true
+    })
     personal_email: string
 
-    @Column()
+    @Column({
+        nullable: true
+    })
     address_line_1: string
 
-    @Column()
+    @Column({
+        nullable: true
+    })
     address_line_2: string
 
-    @Column()
+    @Column({
+        nullable: true
+    })
     address_line_3: string
 
-    @Column()
+    @Column({
+        nullable: true
+    })
     city: string
 
-    @Column()
+    @Column({
+        nullable: true
+    })
     postcode: string
 
-    @Column()
+    @Column({
+        nullable: true
+    })
     country: string
 }

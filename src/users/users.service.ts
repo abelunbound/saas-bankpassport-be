@@ -10,11 +10,10 @@ import * as transactions_data from '../../data'
 
 @Injectable()
 export class UsersService {
-    constructor(@InjectRepository(Users) public user: Repository<Users>,
+    constructor(
+        @InjectRepository(Users) public user: Repository<Users>,
         private configService: ConfigService,
         private readonly jwtService: JwtService,
-        @Inject(forwardRef(() => EnterpriseService))
-        private readonly enterpriseService: EnterpriseService
     ) { }
 
     public async update(id: string, attrs: Partial<Users>) {
@@ -118,7 +117,6 @@ export class UsersService {
                     Authorization: `Bearer ${response.data.access_token}`
                 }
             })
-            console.dir(transactions.data, { depth: null })
             return await this.update(user.id as any, {
                 account: {
                     ...user.account,
@@ -150,6 +148,18 @@ export class UsersService {
             return response.data
         } catch (e) {
             console.log(e)
+        }
+    }
+
+
+    public async deleteUser(user_id: number) {
+        const user = await this.user.findOne({
+            where: {
+                id: user_id
+            }
+        })
+        if (user) {
+            return await this.user.remove(user)
         }
     }
 }

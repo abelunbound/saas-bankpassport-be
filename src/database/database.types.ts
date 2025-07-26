@@ -1,4 +1,5 @@
-import { LoggerOptions } from 'typeorm/logger/LoggerOptions';
+
+import { LoggerOptions } from "typeorm";
 
 export interface IDBSettings {
   readonly host?: string;

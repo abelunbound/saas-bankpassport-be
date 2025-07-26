@@ -26,38 +26,47 @@ export interface RiskProfileCheck {
 }
 
 export class RiskProfileDto extends PartialType(PickType(UsersDto, ["email", "first_name", "last_name", "type"])) {
+    @ApiProperty()
     @IsString()
     @IsNotEmpty()
     course: string
 
+    @ApiProperty()
     @IsNumber()
     @IsNotEmpty()
     tuition_check: number
 
+    @ApiProperty()
     @IsNotEmpty()
     @IsBoolean()
     living_expense_check: boolean
 
+    @ApiProperty()
     @IsNotEmpty()
     @IsBoolean()
     balance_overview: boolean
 
+    @ApiProperty()
     @IsNotEmpty()
     @IsBoolean()
     balance_forcast: boolean
 
-    @IsNotEmpty()
-    @IsBoolean()
-    probability_of_default: boolean
+    // @ApiProperty()
+    // @IsNotEmpty()
+    // @IsBoolean()
+    // probability_of_default: boolean
 
+    @ApiProperty()
     @IsNotEmpty()
     @IsBoolean()
     account_history: boolean
 
+    @ApiProperty()
     @IsString()
     @IsNotEmpty()
     academic_year: string
 
+    @ApiProperty()
     @IsNotEmpty()
     @IsNumber()
     enterpriseId: string

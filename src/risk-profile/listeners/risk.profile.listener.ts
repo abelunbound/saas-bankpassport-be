@@ -1,16 +1,18 @@
 import { Injectable } from "@nestjs/common";
 import { OnEvent } from "@nestjs/event-emitter";
 import { RiskProfileService } from "../risk-profile.service";
-import { generatePdf } from "src/helpers/pdf.helpers";
+import { generatePdf, generatePdfFromHtml } from "src/helpers/pdf.helpers";
 import { NotificationsService } from "src/notifications/notifications.service";
-import { Users } from "src/users/entity/users.entity";
+import { STATUS_ENUM, Users } from "src/users/entity/users.entity";
+import { UsersService } from "src/users/users.service";
 
 
 @Injectable()
 export class RiskProfileListner {
     constructor(
         private readonly notificationService: NotificationsService,
-        private readonly riskProfileService: RiskProfileService
+        private readonly riskProfileService: RiskProfileService,
+        private readonly userService: UsersService
     ) {
 
     }
@@ -21,7 +23,7 @@ export class RiskProfileListner {
         user: Users
     ) {
         console.log('Emitting')
-        const file = await generatePdf(content)
+        const file = await generatePdfFromHtml(content)
         // await this.riskProfileService.updateRiskProfile(
         //     user.enterprise.id as any,
         //     user.riskProfile.id,
@@ -29,6 +31,9 @@ export class RiskProfileListner {
         //         pdfLink: pdf.url
         //     }
         // )
+        await this.userService.update(user.id.toString(), {
+            status: STATUS_ENUM.COMPLETED
+        })
         await this.notificationService.sendEmail({
             to: user.email,
             template: './individual-report-available',

@@ -44,6 +44,7 @@ export class RiskProfile {
     @UpdateDateColumn()
     updatedAt: Date;
 
+    
     probability_of_default: boolean
 
     @Column({
@@ -79,6 +80,10 @@ export class RiskProfileProject {
 
     @Column()
     startDate: Date
+
+    @OneToOne(() => Enterprise)
+    @JoinColumn()
+    enterprise: Enterprise
 
     @Column()
     endDate: Date
