@@ -1,6 +1,7 @@
 import { IsString, IsNotEmpty, IsEmail, IsEnum, ValidateIf } from 'class-validator'
 import { AccountTypes } from '../entity/users.entity';
 import { PickType } from '@nestjs/mapped-types';
+import { ApiProperty } from '@nestjs/swagger';
 
 
 export enum TINK_CHECKS {
@@ -15,24 +16,29 @@ export enum TINK_CHECKS {
 
 
 export class UsersDto {
+    @ApiProperty()
     @IsString()
     @IsNotEmpty()
     @IsEmail()
     email: string;
 
+    @ApiProperty()
     @IsString()
     @IsNotEmpty()
     first_name: string
 
+    @ApiProperty()
     @IsString()
     @IsEnum(AccountTypes)
     @IsNotEmpty()
     type: AccountTypes
 
+    @ApiProperty()
     @IsString()
     @IsNotEmpty()
     last_name: string
 
+    @ApiProperty()
     @ValidateIf(o => o.type === AccountTypes.NIGERIA)
     @IsString()
     @IsNotEmpty()
@@ -43,6 +49,7 @@ export class UsersDto {
     @IsNotEmpty()
     code: string
 
+    @ApiProperty()
     @IsString()
     @IsNotEmpty()
     enterpriseId: string
@@ -50,6 +57,7 @@ export class UsersDto {
 
 
 export class IUserDto extends PickType(UsersDto, ["email", "last_name", "first_name", "enterpriseId"]){
+    @ApiProperty()
     @IsNotEmpty()
     @IsEnum(AccountTypes)
     @IsString()

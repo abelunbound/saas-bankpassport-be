@@ -9,7 +9,7 @@ import { IDBSettings } from './database.types';
 
 export function getOrmConfig(): TypeOrmModuleOptions {
   let ormConfig: TypeOrmModuleOptions;
-  if (process.env.NODE_ENV === 'production') {
+  // if (process.env.NODE_ENV === 'production') {
     ormConfig = {
       type: "postgres",
       host: process.env.POSTGRES_HOST,
@@ -26,16 +26,16 @@ export function getOrmConfig(): TypeOrmModuleOptions {
         connectionLimit: 15,
       },
     };
-  } else {
-    ormConfig = {
-      type: 'sqlite',
-      database: 'db.sqlite',
-      entities: [__dirname + '/../**/*.entity{.ts,.js}'],
-      migrations: [__dirname + '/migrations/**/*{.ts,.js}'],
-      migrationsRun: true,
-      synchronize: true,
-    };
-  }
+  // } else {
+  //   ormConfig = {
+  //     type: 'sqlite',
+  //     database: 'db.sqlite',
+  //     entities: [__dirname + '/../**/*.entity{.ts,.js}'],
+  //     migrations: [__dirname + '/migrations/**/*{.ts,.js}'],
+  //     migrationsRun: true,
+  //     synchronize: true,
+  //   };
+  // }
   console.log(ormConfig, 'DG Config')
   return ormConfig;
 }
